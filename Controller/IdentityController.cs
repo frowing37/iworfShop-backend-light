@@ -41,4 +41,19 @@ public class IdentityController
             return IworfResult<UserResultModel>.Fail(control.Message);
         }
     }
+
+    [HttpPost("signUp")]
+    public async Task<IworfResult<UserResultModel>> SignUp(SignUpModel model)
+    {
+        var result = await _identityService.SignUp(model);
+
+        if (result.IsSuccess)
+        {
+            return IworfResult<UserResultModel>.Success(new UserResultModel());
+        }
+        else
+        {
+            return IworfResult<UserResultModel>.Fail(result.Message);
+        }
+    }
 }

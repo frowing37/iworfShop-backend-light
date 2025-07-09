@@ -1,11 +1,14 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 using iworfShop_backend_light.Common;
 using iworfShop_backend_light.Common.Helpers;
 using iworfShop_backend_light.Data;
+using iworfShop_backend_light.Models;
 using iworfShop_backend_light.Models.Dtos;
 using iworfShop_backend_light.Models.Entities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 namespace iworfShop_backend_light.Services;
@@ -13,21 +16,20 @@ namespace iworfShop_backend_light.Services;
 public interface IIdentityService
 {
     Task<string> GenerateJwtToken(User user);
-    Task<bool> SignUp(SignUpModel model);
+    Task<QueryResult> SignUp(SignUpModel model);
     Task<QueryResult> CheckUserWithPassword(LoginModel model);
 }
 
 public class IdentityService : IIdentityService
 {
-    private readonly IConfiguration _config;
+    private readonly MainConfig _config;
     private readonly SqlLiteClient  _sqlLiteClient;
 
-    public IdentityService(IConfiguration configuration, SqlLiteClient sqlLiteClient)
+    public IdentityService(SqlLiteClient sqlLiteClient)
     {
-        _config = configuration;
         _sqlLiteClient = sqlLiteClient;
+        _config = JsonSerializer.Deserialize<MainConfig>(_sqlLiteClient.Configs.First().Body);
     }
-
     public async Task<string> GenerateJwtToken(User user)
     {
         var claims = new[]
@@ -37,22 +39,52 @@ public class IdentityService : IIdentityService
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config.JwtConfig.Key));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
-            issuer: _config["Jwt:Issuer"],
-            audience: _config["Jwt:Audience"],
+            issuer: _config.JwtConfig.Issuer,
+            audience: _config.JwtConfig.Audience,
             claims: claims,
             expires: DateTime.Now.AddDays(7),
             signingCredentials: creds);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
-
-    public Task<bool> SignUp(SignUpModel model)
+    public async Task<QueryResult> SignUp(SignUpModel model)
     {
-        throw new NotImplementedException();
+        var control = await _sqlLiteClient.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
+
+        if (control is not null)
+        {
+            return new QueryResult() { IsSuccess = false, Message = "Bu email ile bir kullanıcı kaydı zaten mevcut.", };
+        }
+        else
+        {
+            try
+            {
+                var newUser = new User
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = model.Name,
+                    Surname = model.Surname,
+                    PhoneNumber = model.PhoneNumber,
+                    Email = model.Email,
+                    HashPassword = TextHasher.HashIt(model.Password),
+                };
+                _sqlLiteClient.Users.Add(newUser);
+                await _sqlLiteClient.SaveChangesAsync();
+
+                return new QueryResult()
+                    { IsSuccess = true, Message = "IYYEEAHHHH", Data = JsonSerializer.Serialize(newUser) };
+            }
+            catch (Exception e)
+            {
+                return new QueryResult()
+                    { IsSuccess = false, Message = e.Message };
+            }
+        }
+        
     }
 
     public async Task<QueryResult> CheckUserWithPassword(LoginModel model)
@@ -68,7 +100,7 @@ public class IdentityService : IIdentityService
 
         if (control)
         {
-            return new QueryResult() { IsSuccess = true, Message = "IYYEEEAAAAHHHHHH" };
+            return new QueryResult() { IsSuccess = true, Message = "IYYEEEAAAAHHHHHH", Data = JsonSerializer.Serialize(user) };
         }
         else
         {
