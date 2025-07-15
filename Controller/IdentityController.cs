@@ -9,11 +9,10 @@ namespace iworfShop_backend_light.Controller;
 
 [Route("api/[controller]")]
 [ApiController]
-public class IdentityController
+public class IdentityController : IworfController
 {
-    private readonly IdentityService _identityService;
-
-    public IdentityController(IdentityService identityService)
+    private readonly IIdentityService _identityService;
+    public IdentityController(IIdentityService identityService)
     {
         _identityService = identityService;
     }
@@ -28,7 +27,7 @@ public class IdentityController
             var user = JsonSerializer.Deserialize<User>(control.Data);
             var token = await _identityService.GenerateJwtToken(user);
             
-            return IworfResult<UserResultModel>.Success(new UserResultModel
+            return Success(new UserResultModel
             {
                 Token = token,
                 Id = user.Id,
@@ -38,7 +37,7 @@ public class IdentityController
         }
         else
         {
-            return IworfResult<UserResultModel>.Fail(control.Message);
+            return Fail(new UserResultModel(), control.Message);
         }
     }
 
@@ -49,11 +48,18 @@ public class IdentityController
 
         if (result.IsSuccess)
         {
-            return IworfResult<UserResultModel>.Success(new UserResultModel());
+            var user = JsonSerializer.Deserialize<User>(result.Data);
+            return IworfResult<UserResultModel>.Success(new UserResultModel
+            {
+                Token = null,
+                Id = user.Id,
+                Name = user.Name,
+                Surname = user.Surname,
+            });
         }
         else
         {
-            return IworfResult<UserResultModel>.Fail(result.Message);
+            return Fail(new UserResultModel(), result.Message);
         }
     }
 }

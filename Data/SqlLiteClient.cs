@@ -5,6 +5,8 @@ namespace iworfShop_backend_light.Data;
 
 public class SqlLiteClient : DbContext
 {
-    public DbSet<Config> Configs { get; set; }
+    public SqlLiteClient(DbContextOptions<SqlLiteClient> options) : base(options)
+    {
+    }
     public DbSet<User> Users { get; set; }
 }

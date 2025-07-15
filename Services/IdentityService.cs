@@ -22,13 +22,13 @@ public interface IIdentityService
 
 public class IdentityService : IIdentityService
 {
-    private readonly MainConfig _config;
     private readonly SqlLiteClient  _sqlLiteClient;
+    private readonly IRedisClient _redisClient;
 
-    public IdentityService(SqlLiteClient sqlLiteClient)
+    public IdentityService(SqlLiteClient sqlLiteClient, IRedisClient redisClient)
     {
         _sqlLiteClient = sqlLiteClient;
-        _config = JsonSerializer.Deserialize<MainConfig>(_sqlLiteClient.Configs.First().Body);
+        _redisClient = redisClient;
     }
     public async Task<string> GenerateJwtToken(User user)
     {
@@ -39,12 +39,12 @@ public class IdentityService : IIdentityService
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config.JwtConfig.Key));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(await _redisClient.GetValueAsync("JwtConfig-Key")));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
-            issuer: _config.JwtConfig.Issuer,
-            audience: _config.JwtConfig.Audience,
+            issuer: await _redisClient.GetValueAsync("JwtConfig-Issuer"),
+            audience: await _redisClient.GetValueAsync("JwtConfig-Audience"),
             claims: claims,
             expires: DateTime.Now.AddDays(7),
             signingCredentials: creds);

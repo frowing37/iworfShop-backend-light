@@ -4,6 +4,7 @@ public enum IworfResultCode
 {
     Success = 200,
     Error = 400,
-    Unauthorized = 401,
+    Unauthorized = 201,
     InternalError = 500,
+    SystemError = 404,
 }

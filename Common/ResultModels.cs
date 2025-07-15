@@ -1,31 +1,69 @@
 namespace iworfShop_backend_light.Common;
 
-public struct IworfResult<T>
+
+public struct IworfResult
+{
+    public IworfResultCode Code { get; set; }
+    public string ErrorMessage { get; set; }
+    public bool IsSuccess => Code == IworfResultCode.Success;
+    
+    public IworfResult(IworfResultCode code, string errorMessage = null)
+    {
+        Code = code;
+        ErrorMessage = errorMessage;
+    }
+    
+    public static IworfResult Success()
+    {
+        return new IworfResult(IworfResultCode.Success);
+    }
+
+    public static IworfResult Error(IworfResultCode code = IworfResultCode.SystemError, string errorMessage = null)
+    {
+        return new IworfResult(code, errorMessage);
+    }
+}
+
+public partial struct IworfResult<T> where T : class
 {
     public bool IsSuccess { get; set; }
     public IworfResultCode Code { get; set; }
-    public T Data { get; set; }
+    public T? Data { get; set; }
     public string ErrorMessage { get; set; }
-    
-    public static IworfResult<T> Success(T data)
+
+    private IworfResult(T data = default)
     {
-        return new IworfResult<T>
-        {
-            IsSuccess = true,
-            Code = IworfResultCode.Success,
-            Data = data,
-            ErrorMessage = null
-        };
+        Data = data;
+        Code = IworfResultCode.Success;
+        ErrorMessage = null;
+    }
+
+    private IworfResult(T data, string errorMessage)
+    {
+        Data = default;
+        Code = IworfResultCode.SystemError;
+        ErrorMessage = errorMessage;
+    }
+
+    private IworfResult(string authMessage)
+    {
+        Data = default;
+        Code = IworfResultCode.Unauthorized;
+        ErrorMessage = authMessage;
     }
     
-    public static IworfResult<T> Fail(string error)
+    public static IworfResult<T> Success(T data = default)
     {
-        return new IworfResult<T>
-        {
-            IsSuccess = false,
-            Code = IworfResultCode.Error,
-            Data = default,
-            ErrorMessage = error
-        };
+        return new IworfResult<T>(data);
+    }
+    
+    public static IworfResult<T> Fail(T data, string? errorMessage)
+    {
+        return new IworfResult<T>(data, errorMessage);
+    }
+
+    public static IworfResult<T> Unauthorized()
+    {
+        return new IworfResult<T>("Kimlik doğrulanamadı");
     }
 }

@@ -1,33 +1,39 @@
-
-using System.Text;
 using iworfShop_backend_light.Data;
+using iworfShop_backend_light.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
+using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
 
 SQLitePCL.Batteries.Init();
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddScoped<SqlLiteClient>();
+builder.Services.AddDbContext<SqlLiteClient>(options =>
+    options.UseSqlite("Data Source=app.db"));
+builder.Services.AddSingleton<IConnectionMultiplexer>(
+    ConnectionMultiplexer.Connect("localhost:6379"));
+
+builder.Services.AddScoped<JwtOptionsService>();
+builder.Services.AddScoped<IRedisClient, RedisClient>();
+builder.Services.AddScoped<IIdentityService, IdentityService>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+    .AddJwtBearer("JwtScheme", options =>
     {
-        options.TokenValidationParameters = new TokenValidationParameters
+        options.Events = new JwtBearerEvents
         {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+            OnMessageReceived = async context =>
+            {
+                var jwtOptionsService = context.HttpContext.RequestServices.GetRequiredService<JwtOptionsService>();
+                var tokenValidationParams = await jwtOptionsService.GetTokenValidationParametersAsync();
+                
+                context.Options.TokenValidationParameters = tokenValidationParams;
+                
+                await Task.CompletedTask;
+            }
         };
     });
-
 
 builder.Services.AddSwaggerGen();
 
