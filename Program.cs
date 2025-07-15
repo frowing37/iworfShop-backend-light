@@ -50,6 +50,12 @@ app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
-app.MapControllers(); // Controller'ları route etmek için gerekli
+app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    var jwtInit = scope.ServiceProvider.GetRequiredService<JwtOptionsService>();
+    await jwtInit.GetTokenValidationParametersAsync();
+}
 
 app.Run();

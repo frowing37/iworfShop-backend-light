@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("iworfShop-backend-light")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+80588d332b77ec8e07c697e76464135f7d175e21")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f8fbf1107ecc6479de52c9014d4f1bdf447e7414")]
 [assembly: System.Reflection.AssemblyProductAttribute("iworfShop-backend-light")]
 [assembly: System.Reflection.AssemblyTitleAttribute("iworfShop-backend-light")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

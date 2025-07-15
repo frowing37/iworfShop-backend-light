@@ -6,5 +6,5 @@ public enum IworfResultCode
     Error = 400,
     Unauthorized = 201,
     InternalError = 500,
-    SystemError = 404,
+    NotFound = 404,
 }

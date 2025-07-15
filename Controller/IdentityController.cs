@@ -18,7 +18,7 @@ public class IdentityController : IworfController
     }
 
     [HttpPost("login")]
-    public async Task<IworfResult<UserResultModel>> SignIn(LoginModel model)
+    public async Task<IActionResult> SignIn(LoginModel model)
     {
         var control = await _identityService.CheckUserWithPassword(model);
 
@@ -37,19 +37,26 @@ public class IdentityController : IworfController
         }
         else
         {
-            return Fail(new UserResultModel(), control.Message);
+            if(control.Code == IworfResultCode.NotFound)
+            {
+                return NotFound(control.Message);
+            }
+            else
+            {
+                return Unauthorized(control.Message);
+            }
         }
     }
 
     [HttpPost("signUp")]
-    public async Task<IworfResult<UserResultModel>> SignUp(SignUpModel model)
+    public async Task<IActionResult> SignUp(SignUpModel model)
     {
         var result = await _identityService.SignUp(model);
 
         if (result.IsSuccess)
         {
             var user = JsonSerializer.Deserialize<User>(result.Data);
-            return IworfResult<UserResultModel>.Success(new UserResultModel
+            return Success(new UserResultModel
             {
                 Token = null,
                 Id = user.Id,

@@ -21,9 +21,14 @@ public class JwtOptionsService
 
         if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(issuer) || string.IsNullOrEmpty(audience))
         {
-            key = await _redis.SetValueAsync("JwtConfig-Key", Guid.NewGuid().ToString());
-            issuer = await _redis.SetValueAsync("JwtConfig-Issuer", "iworfShopAPI");
-            audience = await _redis.SetValueAsync("JwtConfig-Audience", "iworfShopMobile");
+            await _redis.SetValueAsync("JwtConfig-Key", Guid.NewGuid().ToString());
+            await _redis.SetValueAsync("JwtConfig-Issuer", "iworfShopAPI");
+            await _redis.SetValueAsync("JwtConfig-Audience", "iworfShopMobile");
+
+            // TEKRAR OKU
+            key = await _redis.GetValueAsync("JwtConfig-Key");
+            issuer = await _redis.GetValueAsync("JwtConfig-Issuer");
+            audience = await _redis.GetValueAsync("JwtConfig-Audience");
 
             if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(issuer) || string.IsNullOrEmpty(audience))
             {

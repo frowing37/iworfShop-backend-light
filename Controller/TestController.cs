@@ -19,14 +19,14 @@ public class TestController : IworfController
     }
 
     [HttpGet("redisGetValue")]
-    public async Task<IworfResult<string>> RedisGetValue(string key)
+    public async Task<IActionResult> RedisGetValue(string key)
     {
         var result = await _redisClient.GetValueAsync(key);
         return Success(result);
     }
 
     [HttpPost("redisSetValue")]
-    public async Task<IworfResult<string>> RedisSetValue(string key, string value)
+    public async Task<IActionResult> RedisSetValue(string key, string value)
     {
         var result = await _redisClient.SetValueAsync(key, value);
         return string.IsNullOrEmpty(result) ? Success("IYYEAHH") : Fail("tüh olmadı be");

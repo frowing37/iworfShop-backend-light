@@ -32,7 +32,7 @@ public class RedisClient :  IRedisClient
         }
         catch (Exception)
         {
-            return "";
+            throw new Exception("Redis key could not be set");
         }
     }
 }

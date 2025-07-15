@@ -18,15 +18,14 @@ public struct IworfResult
         return new IworfResult(IworfResultCode.Success);
     }
 
-    public static IworfResult Error(IworfResultCode code = IworfResultCode.SystemError, string errorMessage = null)
+    public static IworfResult Error(IworfResultCode code = IworfResultCode.NotFound, string errorMessage = null)
     {
         return new IworfResult(code, errorMessage);
     }
 }
-
 public partial struct IworfResult<T> where T : class
 {
-    public bool IsSuccess { get; set; }
+    public bool IsSuccess { get; set; } = true;
     public IworfResultCode Code { get; set; }
     public T? Data { get; set; }
     public string ErrorMessage { get; set; }
@@ -40,13 +39,15 @@ public partial struct IworfResult<T> where T : class
 
     private IworfResult(T data, string errorMessage)
     {
+        IsSuccess = false;
         Data = default;
-        Code = IworfResultCode.SystemError;
+        Code = IworfResultCode.NotFound;
         ErrorMessage = errorMessage;
     }
 
     private IworfResult(string authMessage)
     {
+        IsSuccess = false;
         Data = default;
         Code = IworfResultCode.Unauthorized;
         ErrorMessage = authMessage;

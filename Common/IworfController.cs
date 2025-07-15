@@ -9,19 +9,34 @@ public class IworfController : ControllerBase
         return IworfResult.Success();
     }
 
-    protected IworfResult<T> Success<T>(T data) where T : class
+    protected IActionResult Success<T>(T data) where T : class
     {
-        return IworfResult<T>.Success(data);
+        var result = IworfResult<T>.Success(data);
+        return Ok(result);
     }
     
-    protected IworfResult Fail(IworfResultCode code = IworfResultCode.SystemError,
+    protected IActionResult Fail(IworfResultCode code = IworfResultCode.NotFound,
         string? customErrorMessage = null)
     {
-        return IworfResult.Error(code, customErrorMessage);
+        var result = IworfResult.Error(code, customErrorMessage);
+        return BadRequest(result);
     }
 
-    protected IworfResult<TData> Fail<TData>(TData? data, string? customErrorMessage = null) where TData : class
+    protected IActionResult Fail<TData>(TData? data, string? customErrorMessage = null) where TData : class
     {
-        return IworfResult<TData>.Fail(data, customErrorMessage);
+        var result = IworfResult<TData>.Fail(data, customErrorMessage);
+        return BadRequest(result);
+    }
+
+    protected IActionResult Unauthorized(string? message = "Kimlik doğrulama başarısız.")
+    {
+        var result = IworfResult.Error(IworfResultCode.Unauthorized, message);
+        return Unauthorized(result);
+    }
+    
+    protected IActionResult NotFound(string? message = "İstenen kaynak bulunamadı.")
+    {
+        var result = IworfResult.Error(IworfResultCode.NotFound, message);
+        return NotFound(result);
     }
 }
