@@ -1,9 +1,7 @@
-using System.Text.Json;
+using System.Security.Claims;
 using iworfShop_backend_light.Common;
 using iworfShop_backend_light.Data;
-using iworfShop_backend_light.Models.Dtos;
-using iworfShop_backend_light.Models.Entities;
-using iworfShop_backend_light.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace iworfShop_backend_light.Controller;
@@ -16,6 +14,17 @@ public class TestController : IworfController
     public TestController(IRedisClient redisClient)
     {
         _redisClient = redisClient;
+    }
+
+    [Authorize]
+    [HttpGet("AuthTest")]
+    public async Task<IActionResult> AuthTest()
+    {
+        var email = User.FindFirstValue(System.Security.Claims.ClaimTypes.Email);
+        var userId = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
+
+        var message = $"✅ Yetkili erişim başarılı. Kullanıcı ID: {userId}, Email: {email}";
+        return Success(message);
     }
 
     [HttpGet("redisGetValue")]

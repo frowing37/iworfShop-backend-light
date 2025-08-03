@@ -2,6 +2,7 @@ using iworfShop_backend_light.Data;
 using iworfShop_backend_light.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 using StackExchange.Redis;
 
 SQLitePCL.Batteries.Init();
@@ -18,28 +19,50 @@ builder.Services.AddScoped<JwtOptionsService>();
 builder.Services.AddScoped<IRedisClient, RedisClient>();
 builder.Services.AddScoped<IIdentityService, IdentityService>();
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer("JwtScheme", options =>
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+{
+    options.Events = new JwtBearerEvents
     {
-        options.Events = new JwtBearerEvents
+        OnMessageReceived = async context =>
         {
-            OnMessageReceived = async context =>
-            {
-                var jwtOptionsService = context.HttpContext.RequestServices.GetRequiredService<JwtOptionsService>();
-                var tokenValidationParams = await jwtOptionsService.GetTokenValidationParametersAsync();
-                
-                context.Options.TokenValidationParameters = tokenValidationParams;
-                
-                await Task.CompletedTask;
-            }
-        };
-    });
+            var jwtOptionsService = context.HttpContext.RequestServices.GetRequiredService<JwtOptionsService>();
+            var tokenValidationParams = await jwtOptionsService.GetTokenValidationParametersAsync();
+            context.Options.TokenValidationParameters = tokenValidationParams;
+            await Task.CompletedTask;
+        }
+    };
+});
 
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Description = "Lütfen 'Bearer [token]' formatında girin",
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey
+    });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement {
+    {
+        new OpenApiSecurityScheme
+        {
+            Reference = new OpenApiReference
+            {
+                Type = ReferenceType.SecurityScheme,
+                Id = "Bearer"
+            }
+        },
+        Array.Empty<string>()
+    }});
+});
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -48,6 +71,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
